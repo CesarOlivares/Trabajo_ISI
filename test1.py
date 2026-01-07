@@ -73,7 +73,7 @@ class Sensor:
             try:
                 self._actualizar_excel(id_hoja_excel)
             except Exception as e:
-                print(f"No se pudo guardar Excel (Posiblemente abierto): {e}")
+                print(f"⚠️ No se pudo guardar Excel (Posiblemente abierto): {e}")
 
     def _actualizar_excel(self, sheet_name):
         # Usamos 'try' interno por si el archivo está bloqueado por el usuario
@@ -172,33 +172,32 @@ def credenciales():
         st.session_state["autorizado"] = True
     else:
         st.session_state["autorizado"] = False
-        st.error("❌ Usuario o contraseña incorrectos")
+        st.error("Usuario o contraseña incorrectos")
 
 def autorizar_usuario():
-    # Inicializar estado si no existe
+    #Inicializar estado si no existe
     if "autorizado" not in st.session_state:
         st.session_state["autorizado"] = False
     
-    # Si ya está autorizado, dejamos pasar al código principal
+    #Si ya está autorizado, dejamos pasar al código principal
     if st.session_state["autorizado"]:
         return True
     
-    # --- DISEÑO DEL LOGIN ---
-    # Usamos columnas para centrar la caja de login en la pantalla
+    #Diseño del login
     col_izq, col_centro, col_der = st.columns([1, 2, 1])
     
     with col_centro:
-        st.write("") # Espacio vertical
+        st.write("") 
         st.write("") 
         with st.container(border=True):
             st.markdown("## Acceso Monitoreo de Temperatura")    
-            # Inputs SIN on_change (esperan al botón)
+            #Inputs (esperan al botón)
             st.text_input("Usuario", key="user", placeholder="Ingrese usuario...")
             st.text_input("Contraseña", type="password", key="contraseña", placeholder="Ingrese contraseña...")
             
             st.write("") # Espacio
             
-            # EL BOTÓN DE INICIO DE SESIÓN
+            #Boton de inicio de sesion
             st.button("Iniciar Sesión", on_click=credenciales, type="primary", use_container_width=True)
             
         return False
@@ -219,7 +218,7 @@ if autorizar_usuario():
     #columna izquierda
     with col_izq:
         st.subheader("Flota")
-        busqueda = st.text_input("🔍 Buscar ID/Patente", placeholder="Eje: C-001").upper()
+        busqueda = st.text_input("Buscar ID/Patente", placeholder="Eje: C-001").upper()
         
         if datos_camiones:
             opciones = list(datos_camiones.keys())
@@ -244,7 +243,7 @@ if autorizar_usuario():
         st.write("### Control")
         
         #Definimos el interruptor
-        monitoreo_activo = st.toggle(" Activar Monitoreo en Vivo")
+        monitoreo_activo = st.toggle("Activar Monitoreo en Vivo")
         
         #Lógica de Métricas y Alertas
         if not sensor_actual.historial_db.empty:
@@ -253,25 +252,25 @@ if autorizar_usuario():
             
             st.metric("Temperatura Promedio", f"{promedio:.2f} °C")
 
-            #Rompe límite superior
+            #Se supera cota superior
             if ultimo_dato > sensor_actual.umbral_max:
                 st.metric("Temperatura Actual", f"{ultimo_dato:.2f} °C", delta=f"{ultimo_dato - sensor_actual.umbral_max:.2f} °C (Exceso)", delta_color="inverse")
-                st.error(f"🚨 Alerta Temp Alta ({ultimo_dato:.2f} > {sensor_actual.umbral_max})")
+                st.error(f"¡ALERTA CRÍTICA! Temp Alta ({ultimo_dato:.2f} > {sensor_actual.umbral_max})")
             
-            #Rompe límite inferior
+            #Se supera cota inferior
             elif ultimo_dato < sensor_actual.umbral_min:
                 st.metric("Temperatura Actual", f"{ultimo_dato:.2f} °C", delta=f"{ultimo_dato - sensor_actual.umbral_min:.2f} °C (Baja)", delta_color="inverse")
-                st.error(f"❄️ Alerta Congelamiento ({ultimo_dato:.2f} < {sensor_actual.umbral_min})")
+                st.error(f"¡ALERTA CRÍTICA! Congelamiento ({ultimo_dato:.2f} < {sensor_actual.umbral_min})")
             
             #Todo normal
             else:
                 st.metric("Temperatura Actual", f"{ultimo_dato:.2f} °C", delta="Normal")
-                st.success("✅ Estado: Temperatura Óptima")
+                st.success("Estado: Temperatura Óptima")
         
         st.divider()
 
         #Botón de Reinicio, este solo limpia la memoria actual
-        if st.button("🔄 Reiniciar Datos", type="primary", use_container_width=True):
+        if st.button("Reiniciar Datos", type="primary", use_container_width=True):
             sensor_actual.historial_db = pd.DataFrame(columns=["Hora", "Valor", "LimSup", "LimInf"])
             sensor_actual._generar_datos_iniciales()
             st.rerun()
@@ -285,7 +284,6 @@ if autorizar_usuario():
             df_grafico = sensor_actual.historial_db.copy()
             
             #Transformamos a formato largo para Altair
-            # Mantenemos nombres SIMPLES en las columnas internas ('Tipo' y 'Temp')
             df_melt = df_grafico.melt(
                 id_vars='Hora', 
                 value_vars=['Valor', 'LimSup', 'LimInf'], 
@@ -302,7 +300,7 @@ if autorizar_usuario():
                     range=['#10B981', '#EF4444', '#3B82F6']
                 )),
                 
-                # Tooltip: Lo que sale al pasar el mouse
+                
                 tooltip=[
                     alt.Tooltip('Hora', title='Hora'),
                     alt.Tooltip('Tipo', title='Variable'),
@@ -318,7 +316,7 @@ if autorizar_usuario():
             criticos = df[ (df["Valor"] > df["LimSup"]) | (df["Valor"] < df["LimInf"]) ].copy()
             
             if not criticos.empty:
-                criticos["Alerta"] = np.where(criticos["Valor"] > criticos["LimSup"], "🔥 CALOR", "❄️ FRÍO")
+                criticos["Alerta"] = np.where(criticos["Valor"] > criticos["LimSup"], "Sobrecalentamiento", "Congelamiento")
                 
                 st.dataframe(
                     criticos[["Hora", "Valor", "Alerta"]].rename(columns={"Valor": "Temp [C°]"}).tail(5).sort_values("Hora", ascending=False),
@@ -326,7 +324,7 @@ if autorizar_usuario():
                     hide_index=True
                 )
             else:
-                st.success(" Operación estable sin alertas.")
+                st.success("Operación estable sin alertas.")
 
     #bucle de simulacion de datos en "tiempo real"
     if monitoreo_activo:
@@ -340,5 +338,5 @@ if autorizar_usuario():
                 camion.asignacion.Lectura_simulacion(id_hoja_excel=None)
         st.rerun()
 
-    #luego en esta parte de simulacion abria que hacer un boton para guardar todo.
+
 
