@@ -73,7 +73,7 @@ class Sensor:
             try:
                 self._actualizar_excel(id_hoja_excel)
             except Exception as e:
-                print(f"⚠️ No se pudo guardar Excel (Posiblemente abierto): {e}")
+                print(f"No se pudo guardar Excel (Posiblemente abierto): {e}")
 
     def _actualizar_excel(self, sheet_name):
         # Usamos 'try' interno por si el archivo está bloqueado por el usuario
@@ -244,7 +244,7 @@ if autorizar_usuario():
         st.write("### Control")
         
         #Definimos el interruptor
-        monitoreo_activo = st.toggle("🔴 Activar Monitoreo en Vivo")
+        monitoreo_activo = st.toggle(" Activar Monitoreo en Vivo")
         
         #Lógica de Métricas y Alertas
         if not sensor_actual.historial_db.empty:
@@ -256,12 +256,12 @@ if autorizar_usuario():
             #Rompe límite superior
             if ultimo_dato > sensor_actual.umbral_max:
                 st.metric("Temperatura Actual", f"{ultimo_dato:.2f} °C", delta=f"{ultimo_dato - sensor_actual.umbral_max:.2f} °C (Exceso)", delta_color="inverse")
-                st.error(f"🚨 ¡ALERTA CRÍTICA! Temp Alta ({ultimo_dato:.2f} > {sensor_actual.umbral_max})")
+                st.error(f"🚨 Alerta Temp Alta ({ultimo_dato:.2f} > {sensor_actual.umbral_max})")
             
             #Rompe límite inferior
             elif ultimo_dato < sensor_actual.umbral_min:
                 st.metric("Temperatura Actual", f"{ultimo_dato:.2f} °C", delta=f"{ultimo_dato - sensor_actual.umbral_min:.2f} °C (Baja)", delta_color="inverse")
-                st.error(f"❄️ ¡ALERTA CRÍTICA! Congelamiento ({ultimo_dato:.2f} < {sensor_actual.umbral_min})")
+                st.error(f"❄️ Alerta Congelamiento ({ultimo_dato:.2f} < {sensor_actual.umbral_min})")
             
             #Todo normal
             else:
@@ -326,7 +326,7 @@ if autorizar_usuario():
                     hide_index=True
                 )
             else:
-                st.success("✅ Operación estable sin alertas.")
+                st.success(" Operación estable sin alertas.")
 
     #bucle de simulacion de datos en "tiempo real"
     if monitoreo_activo:
@@ -341,3 +341,4 @@ if autorizar_usuario():
         st.rerun()
 
     #luego en esta parte de simulacion abria que hacer un boton para guardar todo.
+
